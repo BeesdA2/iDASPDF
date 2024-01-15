@@ -1,0 +1,16 @@
+{
+  "name": "idaspdf",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "odbc": "^2.4.8",
+    "pdf-lib": "^1.17.1"
+  }
+}
