@@ -23,7 +23,7 @@ function getPDFfile (setletter, pdfGUID) {
 	 
 	 //console.log(`Result Set: ${JSON.stringify(result)}`);
 	  
-     // let resultaat = result;
+     // let resultaat = result; 
 	//  console.log('Resultaat:' +JSON.stringify(result));
 	 resolve(result);
 	  connection.close().then(() => {
