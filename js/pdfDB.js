@@ -9,8 +9,8 @@ function getPDFfile (setletter, pdfGUID) {
    return new Promise(function(resolve)
   {  
 	
-	const sSql = 'SELECT * from idad239014.pdffile where PDFGUID = \'' + pdfGUID + '\' with NONE ' ; 
-    //const sSql = 'SELECT * from DASFP' + setletter + 'pdffile where PDFGUID = \'' + pdfGUID + '\' with NONE ' ;
+	//const sSql = 'SELECT * from idad239014.pdffile where PDFGUID = \'' + pdfGUID + '\' with NONE ' ; 
+  const sSql = 'SELECT * from DASFP' + setletter + '.pdffile where PDFGUID = \'' + pdfGUID + '\' with NONE ' ;
   // const sSql = 'SELECT * from dasfpa.apilog order by log_create_date desc limit 1';
 	//const conn =  await odbc.connect('DSN=*LOCAL;NAM=1;CMT=0;');
 	const conn = odbc.connect('DSN=*LOCAL;NAM=1;CMT=0;',  (error, connection) => { 
