@@ -1,6 +1,8 @@
 const { PDFDocument, StandardFonts, degrees, rgb } = require('pdf-lib');
 const { insertDOCDDPSQL } = require("./pdfDB.js"); 
 const fs = require('fs');
+const path = require('path');
+const merge = require('easy-pdf-merge');
 
  	
 
@@ -197,6 +199,351 @@ fs.writeFileSync(filePath, pdfBytes);
 //   • Rendered in an <iframe>
 }
 
+
+
+async  function  samenstellenPDF_Handtekening(setletter, filiaalnummer, documentnummer, oorsprongcode, pdfJSON){
+  // Maak een nieuw PDF document
+  const pdfDoc = await PDFDocument.create();
+
+console.log('Net voor Parse json: pdfJSON');
+var pagesPDF = JSON.parse(pdfJSON);
+console.log('Net na Parse json: pdfJSON');
+let filenamePDF = '';
+//const pagesPDF =  {"pages":[{"pageNbr":1, "page_width":500,"page_height":750,"pdfRow":[{"pdfText":[{"textfield_text":"1.Test","textfield_xas":50,"textfield_yas":700,"textfield_width":10,"textfield_height":15,"textfield_size":14,"textfield_border":0,"textfield_rotate":0,"textfield_titel":"Text1"},{"textfield_text":"2.Test","textfield_xas":50,"textfield_yas":400,"textfield_width":10,"textfield_height":15,"textfield_size":12,"textfield_border":0,"textfield_rotate":0,"textfield_titel":"Text2"}],"pdfCheckbox":[]}]}]}
+for (i = 0; i < pagesPDF.pages.length; i++) {
+  const pageJSON = pagesPDF.pages[i];
+  // Add a blank page to the document
+
+  
+  
+  const page = pdfDoc.addPage([Number(pageJSON.page_width), Number(pageJSON.page_height)]);
+
+
+  
+  
+  for (x = 0; x < pageJSON.pdfArray.length; x++) {
+  const pageArray = pageJSON.pdfArray[x];  
+
+  console.log('pageArray naam: ' + pageArray.naam); 
+filenamePDF = pageArray.handtekening_png_naam;
+
+
+  // Stel de standaard lettertype en grootte in
+  const timesRomanFont = await pdfDoc.embedFont(StandardFonts.TimesRoman);
+  const fontSize = 18;
+
+  // Teken een veldset (rectangular box) op de pagina
+  const fieldsetX = 50;
+  const fieldsetY = 150;
+  const fieldsetWidth = 500;
+  const fieldsetHeight = 550;
+
+  page.drawRectangle({
+      x: fieldsetX,
+      y: fieldsetY,
+      width: fieldsetWidth,
+      height: fieldsetHeight,
+      borderColor: rgb(0, 0, 0),
+      borderWidth: 2,
+  });
+
+  // Voeg de titel "Ondertekenen" toe boven de veldset
+  page.drawText('Ondertekenen PDF document', {
+      x: fieldsetX + 10,
+      y: fieldsetY + fieldsetHeight + 10,
+      size: fontSize,
+      font: timesRomanFont,
+      color: rgb(0, 0, 0),
+  });
+
+
+  // Label rectangle :
+const labelWidth = 420;
+  const labelHeight = 30;
+
+  // Teken een label (naam) met de tekst "John Doe" binnen de veldset
+  const labelX1 = fieldsetX + 20;
+  const labelY1 = fieldsetY + fieldsetHeight - 70;
+ 
+
+// Naam label
+  page.drawText('Naam: ', {
+      x: labelX1 ,
+      y: labelY1 + 35,
+      size: fontSize - 4,
+      font: timesRomanFont,
+      color: rgb(0, 0, 0),
+  });
+
+  // Tekst achtergrond
+  page.drawRectangle({
+      x: labelX1 ,
+      y: labelY1 ,
+      width: labelWidth,
+      height: labelHeight,
+      borderColor: rgb(0, 0, 0),
+      borderWidth: 1,
+  });
+
+  // Tekst label
+  page.drawText( pageArray.naam, {
+      x: labelX1 + 10,
+      y: labelY1 + 10,
+      size: fontSize - 4,
+      font: timesRomanFont,
+      color: rgb(0, 0, 0),
+  });
+
+// Teken een label (email) met de tekst "geen@mail.nl" binnen de veldset
+  const labelX2 = fieldsetX + 20;
+  const labelY2 = fieldsetY + fieldsetHeight - 140;
+ 
+
+// Naam label
+  page.drawText('Emailadres: ', {
+      x: labelX2 ,
+      y: labelY2 + 35,
+      size: fontSize - 4,
+      font: timesRomanFont,
+      color: rgb(0, 0, 0),
+  });
+
+  // Tekst achtergrond
+  page.drawRectangle({
+      x: labelX2 ,
+      y: labelY2 ,
+      width: labelWidth,
+      height: labelHeight,
+      borderColor: rgb(0, 0, 0),
+      borderWidth: 1,
+  });
+
+  // Tekst label
+  page.drawText(pageArray.email, {
+      x: labelX2 + 10,
+      y: labelY2 + 10,
+      size: fontSize - 4,
+      font: timesRomanFont,
+      color: rgb(0, 0, 0),
+  });
+
+
+    // Teken een label (Type auto) met de tekst "XC40 T4" binnen de veldset
+  const labelX3 = fieldsetX + 20;
+  const labelY3 = fieldsetY + fieldsetHeight - 210;
+ 
+
+// Naam label
+  page.drawText('Type auto: ', {
+      x: labelX3 ,
+      y: labelY3 + 35,
+      size: fontSize - 4,
+      font: timesRomanFont,
+      color: rgb(0, 0, 0),
+  });
+
+  // Tekst achtergrond
+  page.drawRectangle({
+      x: labelX3 ,
+      y: labelY3 ,
+      width: labelWidth,
+      height: labelHeight,
+      borderColor: rgb(0, 0, 0),
+      borderWidth: 1,
+  });
+
+  // Tekst label
+  page.drawText(pageArray.typeauto, {
+      x: labelX3 + 10,
+      y: labelY3 + 10,
+      size: fontSize - 4,
+      font: timesRomanFont,
+      color: rgb(0, 0, 0),
+  });
+
+   // Teken een label (Kenteken) met de tekst "X-999-XX" binnen de veldset
+  const labelX4 = fieldsetX + 20;
+  const labelY4 = fieldsetY + fieldsetHeight - 280;
+ 
+
+// Naam label
+  page.drawText('Kenteken: ', {
+      x: labelX4 ,
+      y: labelY4 + 35,
+      size: fontSize - 4,
+      font: timesRomanFont,
+      color: rgb(0, 0, 0),
+  });
+
+  // Tekst achtergrond
+  page.drawRectangle({
+      x: labelX4 ,
+      y: labelY4 ,
+      width: labelWidth,
+      height: labelHeight,
+      borderColor: rgb(0, 0, 0),
+      borderWidth: 1,
+  });
+
+  // Tekst label
+  page.drawText(pageArray.kenteken, {
+      x: labelX4 + 10,
+      y: labelY4 + 10,
+      size: fontSize - 4,
+      font: timesRomanFont,
+      color: rgb(0, 0, 0),
+  });
+
+   // Teken een label (Kenteken) met de tekst "X-999-XX" binnen de veldset
+  const labelX5 = fieldsetX + 20;
+  const labelY5= fieldsetY + fieldsetHeight - 350;
+ 
+
+// Naam label
+  page.drawText('Datum:', {
+      x: labelX5 ,
+      y: labelY5 + 35,
+      size: fontSize - 4,
+      font: timesRomanFont,
+      color: rgb(0, 0, 0),
+  });
+
+  // Tekst achtergrond
+  page.drawRectangle({
+      x: labelX5 ,
+      y: labelY5 ,
+      width: labelWidth,
+      height: labelHeight,
+      borderColor: rgb(0, 0, 0),
+      borderWidth: 1,
+  });
+
+  // Tekst label
+  page.drawText(pageArray.datum, {
+      x: labelX5 + 10,
+      y: labelY5 + 10,
+      size: fontSize - 4,
+      font: timesRomanFont,
+      color: rgb(0, 0, 0),
+  });
+
+   // Teken een label (Handtekening) met de plaatje binnen de veldset
+  const labelX6 = fieldsetX + 20;
+  const labelY6= fieldsetY + fieldsetHeight - 420;
+ 
+
+// Naam label
+  page.drawText('Handtekening: ', {
+      x: labelX6 ,
+      y: labelY6 + 35,
+      size: fontSize - 4,
+      font: timesRomanFont,
+      color: rgb(0, 0, 0),
+  });
+
+  // Vierkant achtergrond
+  page.drawRectangle({
+      x: labelX6 ,
+      y: labelY6 - 90,
+      width: labelWidth,
+      height: labelHeight + 90,
+      borderColor: rgb(0, 0, 0),
+      borderWidth: 1,
+  });
+
+  // Read the image file from the file system
+const imagePath = '../../../../../../www/profoundui/htdocs/signatures/' + pageArray.handtekening_png_naam + '_signature.png'; // Change this to your image path
+console.log('imagePath ' + imagePath);
+const imageBytes = fs.readFileSync(imagePath);
+
+// Determine the image extension to use the correct method
+const ext = path.extname(imagePath).toLowerCase();
+let embeddedImage;
+
+// Embed the image in the PDF document
+if (ext === '.jpg' || ext === '.jpeg') {
+  embeddedImage = await pdfDoc.embedJpg(imageBytes);
+} else if (ext === '.png') {
+  embeddedImage = await pdfDoc.embedPng(imageBytes);
+} else {
+  throw new Error('Unsupported image format. Only JPEG and PNG are supported.');
+}
+
+
+
+// Get the dimensions of the image
+const { width, height } = embeddedImage.scale(0.8);
+
+// Place the image on the page
+page.drawImage(embeddedImage, {
+  x: labelX6 + 10, // X coordinate on the page
+  y: labelY6 - 120, // Y coordinate on the page
+  width,      // Width of the image
+  height,     // Height of the image
+});
+
+
+
+}
+}
+
+  // Sla het PDF document op
+  const pdfBytes = await pdfDoc.save();
+ let filename = filenamePDF + '.pdf';
+
+
+
+
+// For example, `pdfBytes` can be:
+//   • Written to a file in Node
+const filePath = '../../../../../../Volvo/temp/' + filename;
+fs.writeFileSync(filePath, pdfBytes);
+  console.log('PDF succesvol gegenereerd: ' + filename);
+} ;
+
+async  function  mergePDFdocumenten(setletter, filiaalnummer, documentnummer, oorsprongcode, pdfJSON){
+  
+
+console.log('Net voor Parse json: pdfJSON');
+var mergePDF = JSON.parse(pdfJSON);
+
+console.log('Net na Parse json: pdfJSON ' +mergePDF.merge.length);
+
+//const mergePDF =  {"merge":[{"nieuwPDFdocument":"/volvo/temp/PRO010004000402_signed.pdf","mergeArray":[{"toMergePDFdocument":"/volvo/temp/PDFSGNDOC_01_000040004_2.pdf"}, {"toMergePDFdocument":"/volvo/temp/PRO010004000402.pdf"}]}]}
+for (i = 0; i < mergePDF.merge.length; i++) {
+  const mergeJSON = mergePDF.merge[i];
+
+  // Initialiseer een lege array om de objecten in op te slaan
+const resultArray = [];
+
+
+
+// Doorloop de 'merge' array in de JSON
+mergePDF.merge.forEach(item => {
+  // Voeg het object toe aan de array, waarbij de 'mergeArray' wordt uitgesplitst en direct toegevoegd
+  resultArray.push(
+      
+      ...item.mergeArray.map(mergeItem => mergeItem.toMergePDFdocument)
+  );
+});
+
+// Log de resulterende array naar de console
+console.log(resultArray);
+
+
+
+merge( resultArray, mergeJSON.nieuwPDFdocument, function(err) {
+if(err) {
+  return console.log(err)
+}
+console.log('Successfully merged!')
+});
+
+
+}
+}	
+
+
 function fillParagraph(text, font, fontSize, maxWidth) {
   var paragraphs = text.split('\n');
   for (let index = 0; index < paragraphs.length; index++) {
@@ -234,6 +581,8 @@ function filterCharSet (string, font) {
 }
 //samenstellenPDF('{}')
 module.exports = {
-  samenstellenPDF: samenstellenPDF
+  samenstellenPDF: samenstellenPDF,
+  samenstellenPDF_Handtekening : samenstellenPDF_Handtekening,
+  mergePDFdocumenten:mergePDFdocumenten
   
   };
