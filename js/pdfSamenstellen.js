@@ -496,7 +496,7 @@ page.drawImage(embeddedImage, {
 
 // For example, `pdfBytes` can be:
 //   • Written to a file in Node
-const filePath = '../../../../../../Volvo/temp/' + filename;
+const filePath = '../../../../../../www/profoundui/htdocs/signatures/' + filename;
 fs.writeFileSync(filePath, pdfBytes);
   console.log('PDF succesvol gegenereerd: ' + filename);
 } ;
