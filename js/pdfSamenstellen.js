@@ -199,8 +199,6 @@ fs.writeFileSync(filePath, pdfBytes);
 //   • Rendered in an <iframe>
 }
 
-
-
 async  function  samenstellenPDF_Handtekening(setletter, filiaalnummer, documentnummer, oorsprongcode, pdfJSON){
   // Maak een nieuw PDF document
   const pdfDoc = await PDFDocument.create();
@@ -300,7 +298,7 @@ const labelWidth = 420;
  
 
 // Naam label
-  page.drawText('Emailadres: ', {
+  page.drawText('E-mail: ', {
       x: labelX2 ,
       y: labelY2 + 35,
       size: fontSize - 4,
@@ -334,7 +332,7 @@ const labelWidth = 420;
  
 
 // Naam label
-  page.drawText('Type auto: ', {
+  page.drawText('Documentnaam: ', {
       x: labelX3 ,
       y: labelY3 + 35,
       size: fontSize - 4,
@@ -353,7 +351,7 @@ const labelWidth = 420;
   });
 
   // Tekst label
-  page.drawText(pageArray.typeauto, {
+  page.drawText(pageArray.documentnaam, {
       x: labelX3 + 10,
       y: labelY3 + 10,
       size: fontSize - 4,
@@ -366,8 +364,10 @@ const labelWidth = 420;
   const labelY4 = fieldsetY + fieldsetHeight - 280;
  
 
+   
+
 // Naam label
-  page.drawText('Kenteken: ', {
+  page.drawText('Datum en tijd:', {
       x: labelX4 ,
       y: labelY4 + 35,
       size: fontSize - 4,
@@ -386,7 +386,7 @@ const labelWidth = 420;
   });
 
   // Tekst label
-  page.drawText(pageArray.kenteken, {
+  page.drawText(pageArray.datumtijd, {
       x: labelX4 + 10,
       y: labelY4 + 10,
       size: fontSize - 4,
@@ -394,48 +394,15 @@ const labelWidth = 420;
       color: rgb(0, 0, 0),
   });
 
-   // Teken een label (Kenteken) met de tekst "X-999-XX" binnen de veldset
-  const labelX5 = fieldsetX + 20;
-  const labelY5= fieldsetY + fieldsetHeight - 350;
- 
-
-// Naam label
-  page.drawText('Datum:', {
-      x: labelX5 ,
-      y: labelY5 + 35,
-      size: fontSize - 4,
-      font: timesRomanFont,
-      color: rgb(0, 0, 0),
-  });
-
-  // Tekst achtergrond
-  page.drawRectangle({
-      x: labelX5 ,
-      y: labelY5 ,
-      width: labelWidth,
-      height: labelHeight,
-      borderColor: rgb(0, 0, 0),
-      borderWidth: 1,
-  });
-
-  // Tekst label
-  page.drawText(pageArray.datum, {
-      x: labelX5 + 10,
-      y: labelY5 + 10,
-      size: fontSize - 4,
-      font: timesRomanFont,
-      color: rgb(0, 0, 0),
-  });
-
    // Teken een label (Handtekening) met de plaatje binnen de veldset
-  const labelX6 = fieldsetX + 20;
-  const labelY6= fieldsetY + fieldsetHeight - 420;
+  const labelX5 = fieldsetX + 20;
+  const labelY5= fieldsetY + fieldsetHeight - 400;
  
 
 // Naam label
   page.drawText('Handtekening: ', {
-      x: labelX6 ,
-      y: labelY6 + 35,
+      x: labelX5 ,
+      y: labelY5 + 80,
       size: fontSize - 4,
       font: timesRomanFont,
       color: rgb(0, 0, 0),
@@ -443,10 +410,10 @@ const labelWidth = 420;
 
   // Vierkant achtergrond
   page.drawRectangle({
-      x: labelX6 ,
-      y: labelY6 - 90,
+      x: labelX5 ,
+      y: labelY5 - 110,
       width: labelWidth,
-      height: labelHeight + 90,
+      height: labelHeight + 150,
       borderColor: rgb(0, 0, 0),
       borderWidth: 1,
   });
@@ -472,12 +439,12 @@ if (ext === '.jpg' || ext === '.jpeg') {
 
 
 // Get the dimensions of the image
-const { width, height } = embeddedImage.scale(0.8);
+const { width, height } = embeddedImage.scale(0.6);
 
 // Place the image on the page
 page.drawImage(embeddedImage, {
-  x: labelX6 + 10, // X coordinate on the page
-  y: labelY6 - 120, // Y coordinate on the page
+  x: labelX5 + 10, // X coordinate on the page
+  y: labelY5 - 60, // Y coordinate on the page
   width,      // Width of the image
   height,     // Height of the image
 });
@@ -500,6 +467,10 @@ const filePath = '../../../../../../www/profoundui/htdocs/signatures/' + filenam
 fs.writeFileSync(filePath, pdfBytes);
   console.log('PDF succesvol gegenereerd: ' + filename);
 } ;
+
+
+
+ 
 
 async  function  mergePDFdocumenten(setletter, filiaalnummer, documentnummer, oorsprongcode, pdfJSON){
   
