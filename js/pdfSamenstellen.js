@@ -554,6 +554,6 @@ function filterCharSet (string, font) {
 module.exports = {
   samenstellenPDF_Checklist: samenstellenPDF_Checklist,
   samenstellenPDF_Handtekening : samenstellenPDF_Handtekening,
-  mergePDFdocumenten:mergePDFdocumenten
+  mergePDFdocumenten: mergePDFdocumenten,
   
   };
