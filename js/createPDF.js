@@ -1,4 +1,6 @@
-const { samenstellenPDF } = require("./pdfSamenstellen.js"); 
+const { samenstellenPDF_Checklist } = require("./pdfSamenstellen.js"); 
+const { samenstellenPDF_Handtekening } = require("./pdfSamenstellen.js"); 
+const { mergePDFdocumenten } = require("./pdfSamenstellen.js"); 
 const { getPDFfile } = require("./pdfDB.js"); 
  
 
