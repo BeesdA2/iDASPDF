@@ -7,7 +7,7 @@ const merge = require('easy-pdf-merge');
  	
 
 
-async function  samenstellenPDF(setletter, filiaalnummer, documentnummer, oorsprongcode, checklistnummer,  pdfJSON){
+async function  samenstellenPDF_Checklist(setletter, filiaalnummer, documentnummer, oorsprongcode, checklistnummer,  pdfJSON){
 
 // Create a new PDFDocument
 const document = await PDFDocument.create()
@@ -552,7 +552,7 @@ function filterCharSet (string, font) {
 }
 //samenstellenPDF('{}')
 module.exports = {
-  samenstellenPDF: samenstellenPDF,
+  samenstellenPDF_Checklist: samenstellenPDF_Checklist,
   samenstellenPDF_Handtekening : samenstellenPDF_Handtekening,
   mergePDFdocumenten:mergePDFdocumenten
   
