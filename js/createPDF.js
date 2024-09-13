@@ -41,9 +41,9 @@ async function  aanmakenPDF (setletter, pdfGUID){
     
 
   // samestellen PDF document
-    console.log("samenstellen PDF");
-    const respSamenstellenPDF = await samenstellenPDF (setletter, jsonPDFfile[0].PDFFILE_FILIAAL, jsonPDFfile[0].PDFFILE_DOCUMENT, jsonPDFfile[0].PDFFILE_OORSPRONG, jsonPDFfile[0].PDFFILE_CHKLSTNR, jsonPDFfile[0].PDFFILE_JSON);
-    let   response  = await respSamenstellenPDF;
+   // console.log("samenstellen PDF");
+  //  const respSamenstellenPDF = await samenstellenPDF (setletter, jsonPDFfile[0].PDFFILE_FILIAAL, jsonPDFfile[0].PDFFILE_DOCUMENT, jsonPDFfile[0].PDFFILE_OORSPRONG, jsonPDFfile[0].PDFFILE_CHKLSTNR, jsonPDFfile[0].PDFFILE_JSON);
+  //  let   response  = await respSamenstellenPDF;
 //  Maak de samenvatting via OpenAI LLM
  //  const  respSamenvatting =  await get_completion(jsonPythonlog[0].PYTHONJSON.trim()) ;
  //  let    samenvatting =  await respSamenvatting;
