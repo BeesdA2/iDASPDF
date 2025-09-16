@@ -1,6 +1,9 @@
 const { samenstellenPDF_Checklist } = require("./pdfSamenstellen.js"); 
 const { samenstellenPDF_Handtekening } = require("./pdfSamenstellen.js"); 
 const { mergePDFdocumenten } = require("./pdfSamenstellen.js"); 
+const { samenstellenPDF_Voorblad } = require("./pdfSamenstellen.js"); 
+const { mergeOverlayWithDocument } = require("./pdfSamenstellen.js"); 
+
 const { getPDFfile } = require("./pdfDB.js"); 
  
 
@@ -38,7 +41,24 @@ async function  aanmakenPDF (setletter, pdfGUID){
    const respMergPDF_Document = await mergePDFdocumenten (setletter, jsonPDFfile[0].PDFFILE_FILIAAL, jsonPDFfile[0].PDFFILE_DOCUMENT, jsonPDFfile[0].PDFFILE_OORSPRONG, jsonPDFfile[0].PDFFILE_JSON);
    let   response  = await respMergPDF_Document;
   }
-    
+  
+  
+  if ((jsonPDFfile[0].PDFFILE_KENMERK).trim() === 'MERGE_OVERLAY')
+  {		 
+ // samestellen PDF document tbv Handtekening
+   console.log("merge overlay with pdf document");
+   const respMergeOverlay_Document = await mergeOverlayWithDocument (setletter, jsonPDFfile[0].PDFFILE_FILIAAL, jsonPDFfile[0].PDFFILE_DOCUMENT, jsonPDFfile[0].PDFFILE_OORSPRONG, jsonPDFfile[0].PDFFILE_JSON);
+   let   response  = await respMergeOverlay_Document;
+  }
+  
+  
+  if ((jsonPDFfile[0].PDFFILE_KENMERK).trim() === 'VOORBLAD')
+  {		 
+ // samestellen PDF document tbv Handtekening
+   console.log("samenstellen voorblad");
+   const respVoorbladDocument = await samenstellenPDF_Voorblad (setletter, jsonPDFfile[0].PDFFILE_FILIAAL, jsonPDFfile[0].PDFFILE_DOCUMENT, jsonPDFfile[0].PDFFILE_OORSPRONG, jsonPDFfile[0].PDFFILE_JSON);
+   let   response  = await respVoorbladDocument;
+  }
 
   // samestellen PDF document
    // console.log("samenstellen PDF");
