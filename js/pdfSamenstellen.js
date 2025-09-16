@@ -676,7 +676,8 @@ var exterieurUrl = [voorblad.exterieurUrl] ;
 console.log('exterieurUrl: ' + exterieurUrl);	
 var interieurUrl = [voorblad.interieurUrl] ;
 console.log('interieurUrl: ' + interieurUrl);	
-
+var achterkantUrl = [voorblad.achterkantUrl] ;
+console.log('achterkantUrl: ' + achterkantUrl);	
 var wheelsUrl = [voorblad.wheelsUrl] ;	
 console.log('wielen url: ' + wheelsUrl);
 
@@ -786,7 +787,48 @@ function imageInterieurtoPDF(url, callback) {
   });
 }
 
+function imageAchterkantToPDF(url, callback ){
+	request({
+    url: url,
+    encoding: null,
+    headers: {
+      "Connection": "keep-alive",
+      "Cache-Control": "max-age=0",
+      "sec-ch-ua": `"Not;A=Brand";v="99", "Google Chrome";v="139", "Chromium";v="139"`,
+      "sec-ch-ua-mobile": "?0",
+      "sec-ch-ua-platform": `"Windows"`,
+      "Upgrade-Insecure-Requests": "1",
+      "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36",
+      "Accept": "image/png,*/*;q=0.8",
+      "Sec-Fetch-Site": "none",
+      "Sec-Fetch-Mode": "navigate",
+      "Sec-Fetch-User": "?1",
+      "Sec-Fetch-Dest": "document",
+      "Accept-Encoding": "gzip, deflate, br, zstd",
+      "Accept-Language": "nl-NL,nl;q=0.9"
+    }
+  },function(error, response, body){
+		console.log('imageAchterkantToPDF statusCode ' + response.statusCode); 
+		if(!error && response.statusCode == 200){
+			doc.image(body,
+			voorbladConfig[5].imageAchterkant.xOffset,
+			voorbladConfig[5].imageAchterkant.yOffset,
+            {width: voorbladConfig[5].imageAchterkant.width,
+			 height: voorbladConfig[5].imageAchterkant.height} )
+           
+  
 
+//doc.image(body, 350, 265, { width: 200, height: 100})
+//   .text('Stretch', 350, 250)
+ 
+			callback(error, 'done');
+			
+		} else {
+			callback(error || new Error("Status " + response.statusCode + ' url: ' + url)); 
+		}
+	});
+} 
+ 
 
  
 
@@ -839,6 +881,7 @@ function imageWheelstoPDF(url, callback ){
   return Promise.allSettled([
     runEach(exterieurUrl, imageExterieurtoPDF),
     runEach(interieurUrl, imageInterieurtoPDF),
+	runEach(achterkantUrl, imageAchterkantToPDF),
     runEach(wheelsUrl, imageWheelstoPDF),
   ]);
  
@@ -970,7 +1013,7 @@ async function mergeOverlayWithDocument(setletter, filiaalnummer, documentnummer
 }
 
 //overlay('doc1.pdf', 'doc2.pdf', 'overlay.pdf');
-  
+
  
 //samenstellenPDF('{}')
 module.exports = {
