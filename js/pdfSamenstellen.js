@@ -881,7 +881,7 @@ function imageWheelstoPDF(url, callback ){
   return Promise.allSettled([
     runEach(exterieurUrl, imageExterieurtoPDF),
     runEach(interieurUrl, imageInterieurtoPDF),
-	runEach(achterkantUrl, imageAchterkantToPDF),
+	  //runEach(achterkantUrl, imageAchterkantToPDF),
     runEach(wheelsUrl, imageWheelstoPDF),
   ]);
  
