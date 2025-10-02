@@ -474,47 +474,41 @@ fs.writeFileSync(filePath, pdfBytes);
 
  
 
-async  function  mergePDFdocumenten(setletter, filiaalnummer, documentnummer, oorsprongcode, pdfJSON){
-  
+async function mergePDFdocumenten(setletter, filiaalnummer, documentnummer, oorsprongcode, pdfJSON) {
+  console.log('Net voor Parse json: pdfJSON');
+  const mergePDF = JSON.parse(pdfJSON);
 
-console.log('Net voor Parse json: pdfJSON');
-var mergePDF = JSON.parse(pdfJSON);
+  console.log('Net na Parse json: pdfJSON ' + mergePDF.merge.length);
 
-console.log('Net na Parse json: pdfJSON ' +mergePDF.merge.length);
+  for (let i = 0; i < mergePDF.merge.length; i++) {
+    const mergeJSON = mergePDF.merge[i];
 
-//const mergePDF =  {"merge":[{"nieuwPDFdocument":"/volvo/temp/PRO010004000402_signed.pdf","mergeArray":[{"toMergePDFdocument":"/volvo/temp/PDFSGNDOC_01_000040004_2.pdf"}, {"toMergePDFdocument":"/volvo/temp/PRO010004000402.pdf"}]}]}
-for (i = 0; i < mergePDF.merge.length; i++) {
-  const mergeJSON = mergePDF.merge[i];
+    // Bouw array van documenten die je wilt samenvoegen
+    const resultArray = mergeJSON.mergeArray.map(item => item.toMergePDFdocument);
 
-  // Initialiseer een lege array om de objecten in op te slaan
-const resultArray = [];
+    console.log(resultArray);
 
-
-
-// Doorloop de 'merge' array in de JSON
-mergePDF.merge.forEach(item => {
-  // Voeg het object toe aan de array, waarbij de 'mergeArray' wordt uitgesplitst en direct toegevoegd
-  resultArray.push(
-      
-      ...item.mergeArray.map(mergeItem => mergeItem.toMergePDFdocument)
-  );
-});
-
-// Log de resulterende array naar de console
-console.log(resultArray);
-
-
-
-merge( resultArray, mergeJSON.nieuwPDFdocument, function(err) {
-if(err) {
-  return console.log(err)
+    try {
+      await mergeAsync(resultArray, mergeJSON.nieuwPDFdocument);
+      console.log('Successfully merged!');
+    } catch (err) {
+      console.error('Error merging PDF:', err);
+    }
+  }
 }
-console.log('Successfully merged!')
-});
 
 
+// Promise-wrapper maken
+function mergeAsync(files, dest) {
+  return new Promise((resolve, reject) => {
+    merge(files, dest, (err) => {
+      if (err) {
+        return reject(err);
+      }
+      resolve();
+    });
+  });
 }
-}	
 
 function fillParagraph(text, font, fontSize, maxWidth) {
   var paragraphs = text.split('\n');
@@ -551,75 +545,52 @@ function filterCharSet (string, font) {
   string = string.replace(/[^\w\s!?{}()-;:"'*@#$%&+=]/g, '?')
   return string
 }
-async function  samenstellenPDF_Voorblad(setletter, filiaalnummer, documentnummer, oorsprongcode,  pdfJSON){
-	//const voorblad = {"offerteInfo": {"auto" : "Offerte Volvo XC40 T3 GT","klant" : "de heer G.P.M. Meel","offerte" : "62640","datum" : "18-07-2019"} 
-	//,"imagesUrls": {"exterieurUrl": "https://wizz.volvocars.com/images/2026/536/exterior/studio/left/exterior-studio-left_697FB066F16405649ABBF37C9C1BD23B1B104B66.png?client=car-config&w=1260"
-	//,"interieurUrl": "https://wizz.volvocars.com/images/2026/536/interior/studio/side/interior-studio-side_3DE7865E5F8DB7807B24862249EAFF11ACD7F00A.png?client=car-config&w=1260"
-	//,"achterkantUrl": "https://wizz.volvocars.com/icons/2026/536/wheel/R14A/R14A.png?client=car-config&bg=000000&w=1020"
-	//,"wheelsUrl": "https://wizz.volvocars.com/icons/2026/536/wheel/R14A/R14A.png?client=car-config&bg=000000&w=1020"}};
-	//nst voorbladConfig = {"offerteInfoText": {"klant": "Klant:","offerte": "Offerte:", "datum": "Datum:"},"offerteInfoConst": {"tekstTop" : 160, "tekst": 50, "variabele" : 100, "autoXoffset" : 50, 	"autoYoffset" : 250  }, "offerteRectangle": { "xOffset": 40, "yOffset": 140, "width" : 300, "height":  80 }, "imageExterieur": { "xOffset": 20,  "yOffset": 240, "width" : 600, "height": 0  }, "imageInterieur": {"xOffset": 20, "yOffset": 620, "width" : 150, "height": 0}, "imageAchterkant": { "xOffset": 180, "yOffset": 600, "width" : 220, "height": 0  }, "imageWheels": {"xOffset": 380,"yOffset": 620, "width" : 150, "height": 0}} 
-  //const path = 'testVoorblad.pdf'
-  
-  
+
+async function samenstellenPDF_Voorblad(setletter, filiaalnummer, documentnummer, oorsprongcode, pdfJSON) {
   console.log('Net voor Parse json: pdfJSON');
-  var pagesPDF = JSON.parse(pdfJSON);
+  const pagesPDF = JSON.parse(pdfJSON);
   console.log('pagesPDF voorblad json : ' + JSON.stringify(pagesPDF));
-  let voorblad = pagesPDF.voorblad.offerteInfo;
-  console.log('voorblad json : ' + JSON.stringify(voorblad));
-  let voorbladConfig = pagesPDF.voorblad.pdfConfig;
-  console.log('voorblad config json : ' +  JSON.stringify(voorbladConfig));
-  let pathPDF = pagesPDF.voorblad.pdfPath;
-  console.log('Wat is path 1:' +JSON.stringify(pathPDF)); 
-  let path = pathPDF[1].voorbladPath.voorblad;
-  //path = '../../../../../../beesda2/nodejs/merge/testVoorblad5.pdf';
-  console.log('Wat is path 2:' +path);
-  
-  console.log('voor doc Initialiseer');
+
+  const voorblad = pagesPDF.voorblad.offerteInfo;
+  const voorbladConfig = pagesPDF.voorblad.pdfConfig;
+  const pathPDF = pagesPDF.voorblad.pdfPath;
+  const path = pathPDF[1].voorbladPath.voorblad;
+
   let doc = new PDFKitDocument({ size: "A4", margin: 50 });
-  console.log('voor registerFonts');
   registerFonts(doc);
-  console.log('voor generateHeader');
-  //generateHeader(doc, voorblad);
- // console.log('voorblad' + voorblad);
-  
-  
-  
-const results = await generateVoorbladImages(doc, voorblad, voorbladConfig, path);
 
-results.forEach((result, index) => {
-  if (result.status === "rejected") {
-    console.warn(`Error in image batch ${index}: ${result.reason}`);
-  }
-});
-
-console.log("Alle images klaar");
   try {
-  const results = await generateVoorbladImages(doc, voorblad, voorbladConfig, path);
+    console.log("Start images downloaden en plaatsen...");
+    const results = await generateVoorbladImages(doc, voorblad, voorbladConfig, path);
+    results.forEach((result, index) => {
+      if (result.status === "rejected") {
+        console.warn(`Error in image batch ${index}: ${result.reason}`);
+      }
+    });
+    console.log("Alle images geplaatst");
 
-  results.forEach((result, index) => {
-    if (result.status === "rejected") {
-      console.warn(`Error in image batch ${index}: ${result.reason}`);
-    }
-  });
+    generateVoorbladKlantInformatie(doc, voorblad, voorbladConfig);
 
-  console.log("Na images");
+    // ⚠️ Eerst de output-stream starten
+    const writeStream = fs.createWriteStream(path);
+    doc.pipe(writeStream);
 
-  // Hier komt je oude callback-logica
-  generateVoorbladKlantInformatie(doc, voorblad, voorbladConfig);
-  console.log("Na generateVoorbladKlantInformatie");
+    // ⚠️ Pas na ALLE afbeeldingen en tekst het document sluiten
+    doc.end();
 
-  doc.end();
-  doc.pipe(fs.createWriteStream(path));
-  console.log("Na fs.createWriteStream");
-} catch (err) {
-  console.error("error in generateVoorbladImages:", err);
-  throw err; // of afvangen afhankelijk van wat je wilt
+    // Optioneel wachten tot het schrijven naar schijf klaar is
+    await new Promise((resolve, reject) => {
+      writeStream.on("finish", resolve);
+      writeStream.on("error", reject);
+    });
+
+    console.log("PDF succesvol geschreven:", path);
+  } catch (err) {
+    console.error("Fout tijdens PDF-generatie:", err);
+    throw err;
+  }
 }
 
-   
-
-  
-}
 
 function generateHeader(doc, voorblad) {
 	try {
@@ -881,7 +852,7 @@ function imageWheelstoPDF(url, callback ){
   return Promise.allSettled([
     runEach(exterieurUrl, imageExterieurtoPDF),
     runEach(interieurUrl, imageInterieurtoPDF),
-	  //runEach(achterkantUrl, imageAchterkantToPDF),
+	//runEach(achterkantUrl, imageAchterkantToPDF),
     runEach(wheelsUrl, imageWheelstoPDF),
   ]);
  
