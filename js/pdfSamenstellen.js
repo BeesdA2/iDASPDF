@@ -6,6 +6,8 @@ const merge = require('easy-pdf-merge');
 const async = require('async');
 const request = require('request');
 const PDFKitDocument = require("pdfkit");
+const imageSize = require('image-size').imageSize || require('image-size');
+
  	
 
 
@@ -556,7 +558,7 @@ async function samenstellenPDF_Voorblad(setletter, filiaalnummer, documentnummer
   const pathPDF = pagesPDF.voorblad.pdfPath;
   const path = pathPDF[1].voorbladPath.voorblad;
 
-  let doc = new PDFKitDocument({ size: "A4", margin: 50 });
+  let doc = new PDFKitDocument({ size: "A4", margin: 0 });
   registerFonts(doc);
 
   try {
@@ -662,7 +664,13 @@ console.log('voorbladConfig[3].imageExterieur.xOffset' +voorbladConfig[3].imageE
     return new Promise((resolve, reject) => {
       async.each(
         urls,
-        iterator,
+        (url, callback) => {
+        if (!url || url.trim() === "") {
+          console.log("Lege URL overgeslagen");
+          return callback(); // sla over, maar geen fout
+        }
+        iterator(url, callback);
+      },
         (err) => (err ? reject(err) : resolve("done"))
       );
     });
@@ -693,11 +701,16 @@ function imageExterieurtoPDF(url, callback ){
   }, function(error, response, body){
 		console.log('imageExterieurtoPDF statusCode ' + response.statusCode); 
 		if(!error && response.statusCode == 200){
-			doc.image(body,
-			voorbladConfig[3].imageExterieur.xOffset,
-			voorbladConfig[3].imageExterieur.yOffset,
-            {width: voorbladConfig[3].imageExterieur.width,
-			 height: voorbladConfig[3].imageExterieur.height} )
+			drawImageInBox(doc, body, voorbladConfig[3].imageExterieur, voorblad.newOrUsed, (err) => {
+          if (err) return callback(err);
+          callback(null, "done");
+        });
+			
+		//	doc.image(body,
+		//	voorbladConfig[3].imageExterieur.xOffset,
+	//		voorbladConfig[3].imageExterieur.yOffset,
+     //       {width: voorbladConfig[3].imageExterieur.width,
+	//		 height: voorbladConfig[3].imageExterieur.height} )
            
   
 
@@ -705,7 +718,7 @@ function imageExterieurtoPDF(url, callback ){
 //   .text('Stretch', 350, 250)
             
 			 
-		callback(error, "done");
+	//	callback(error, "done");
     } else {
       callback(error || new Error("Status " + response.statusCode));
     }	
@@ -743,15 +756,11 @@ function imageInterieurtoPDF(url, callback) {
   }, function (error, response, body) {
     console.log('imageInterieurtoPDF statusCode ' + response.statusCode);
     if (!error && response.statusCode === 200) {
-      doc.image(body,
-        voorbladConfig[4].imageInterieur.xOffset,
-        voorbladConfig[4].imageInterieur.yOffset,
-        {
-          width: voorbladConfig[4].imageInterieur.width,
-          height: voorbladConfig[4].imageInterieur.height
-        }
-      );
-      callback(error, "done");
+			drawImageInBox(doc, body, voorbladConfig[4].imageInterieur, voorblad.newOrUsed, (err) => {
+          if (err) return callback(err);
+          callback(null, "done");
+        });
+      
     } else {
       callback(error || new Error("Status " + response.statusCode));
     }
@@ -781,18 +790,13 @@ function imageAchterkantToPDF(url, callback ){
   },function(error, response, body){
 		console.log('imageAchterkantToPDF statusCode ' + response.statusCode); 
 		if(!error && response.statusCode == 200){
-			doc.image(body,
-			voorbladConfig[5].imageAchterkant.xOffset,
-			voorbladConfig[5].imageAchterkant.yOffset,
-            {width: voorbladConfig[5].imageAchterkant.width,
-			 height: voorbladConfig[5].imageAchterkant.height} )
-           
+				drawImageInBox(doc, body, voorbladConfig[5].imageAchterkant, voorblad.newOrUsed, (err) => {
+          if (err) return callback(err);
+          callback(null, "done");
+        });
   
 
-//doc.image(body, 350, 265, { width: 200, height: 100})
-//   .text('Stretch', 350, 250)
  
-			callback(error, 'done');
 			
 		} else {
 			callback(error || new Error("Status " + response.statusCode + ' url: ' + url)); 
@@ -828,18 +832,10 @@ function imageWheelstoPDF(url, callback ){
   },function(error, response, body){
 		console.log('imageWheelstoPDF statusCode ' + response.statusCode); 
 		if(!error && response.statusCode == 200){
-			doc.image(body,
-			voorbladConfig[6].imageWheels.xOffset,
-			voorbladConfig[6].imageWheels.yOffset,
-            {width: voorbladConfig[6].imageWheels.width,
-			 height: voorbladConfig[6].imageWheels.height} )
-           
-  
-
-//doc.image(body, 350, 265, { width: 200, height: 100})
-//   .text('Stretch', 350, 250)
- 
-			callback(error, 'done');
+				drawImageInBox(doc, body, voorbladConfig[6].imageWheels, voorblad.newOrUsed, (err) => {
+          if (err) return callback(err);
+          callback(null, "done");
+        });
 			
 		} else {
 			callback(error || new Error("Status " + response.statusCode + ' url: ' + url)); 
@@ -852,7 +848,7 @@ function imageWheelstoPDF(url, callback ){
   return Promise.allSettled([
     runEach(exterieurUrl, imageExterieurtoPDF),
     runEach(interieurUrl, imageInterieurtoPDF),
-	//runEach(achterkantUrl, imageAchterkantToPDF),
+	runEach(achterkantUrl, imageAchterkantToPDF),
     runEach(wheelsUrl, imageWheelstoPDF),
   ]);
  
@@ -860,6 +856,60 @@ function imageWheelstoPDF(url, callback ){
  
 }
 
+ 
+
+function drawImageInBox(doc, imageBuffer, box, newOrUsed, callback) {
+  try {
+	console.log('drawImageInBox function');
+	doc.moveTo(0, 0);
+	//doc.text('Marco', 0, 0); // verplaats cursor naar absolute 0,0
+	
+    const dimensions = imageSize(imageBuffer);
+    const originalWidth = dimensions.width;
+    const originalHeight = dimensions.height;
+	
+	console.log('originalWidth: ' + originalWidth);
+	console.log('originalHeight: ' + originalHeight);
+
+    // Verhouding bepalen om binnen box te passen
+    const ratio = Math.min(
+      box.width / originalWidth,
+      box.height / originalHeight
+    );
+	
+	 let scaledWidth = box.width;
+     let scaledHeight = box.height;	
+	console.log('newOrUsed: ' +newOrUsed);
+    if (newOrUsed === 'G') {
+      scaledWidth = originalWidth * ratio;
+      scaledHeight = originalHeight * ratio;
+	}	
+	
+	console.log('scaledWidth: ' +scaledWidth);
+	console.log('scaledHeight: ' +scaledHeight);
+	
+
+    // Centrerings-offsets berekenen
+   //  const x = box.xOffset + (box.width - scaledWidth) / 2;
+ 	const x = box.xOffset;
+   //  const y = box.yOffset + (box.height - scaledHeight) / 2;
+	const y = box.yOffset;
+	
+	
+
+     console.log('x: '+ x);
+	 console.log('y: '+ y);
+    // Afbeelding tekenen
+    doc.image(imageBuffer, x, y, {
+      width: scaledWidth,
+	  height: scaledHeight 
+    });
+
+    if (callback) callback(null);
+  } catch (err) {
+    if (callback) callback(err);
+  }
+}
 
 
 
