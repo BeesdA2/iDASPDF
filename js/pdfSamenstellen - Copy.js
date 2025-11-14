@@ -2,7 +2,7 @@ const { PDFDocument, StandardFonts, degrees } = require('pdf-lib');
 const fs = require('fs');
  	
 
-
+ 
 async function  samenstellenPDF(pdfJSON){
 
 // Create a new PDFDocument

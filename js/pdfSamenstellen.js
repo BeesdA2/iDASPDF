@@ -3,6 +3,10 @@ const { insertDOCDDPSQL } = require("./pdfDB.js");
 const fs = require('fs');
 const path = require('path');
 const merge = require('easy-pdf-merge');
+const async = require('async');
+const request = require('request');
+const PDFKitDocument = require("pdfkit");
+const imageSize = require('image-size').imageSize || require('image-size');
 
  	
 
@@ -472,47 +476,469 @@ fs.writeFileSync(filePath, pdfBytes);
 
  
 
-async  function  mergePDFdocumenten(setletter, filiaalnummer, documentnummer, oorsprongcode, pdfJSON){
+async function mergePDFdocumenten(setletter, filiaalnummer, documentnummer, oorsprongcode, pdfJSON) {
+  console.log('Net voor Parse json: pdfJSON');
+  const mergePDF = JSON.parse(pdfJSON);
+
+  console.log('Net na Parse json: pdfJSON ' + mergePDF.merge.length);
+
+  for (let i = 0; i < mergePDF.merge.length; i++) {
+    const mergeJSON = mergePDF.merge[i];
+
+    // Bouw array van documenten die je wilt samenvoegen
+    const resultArray = mergeJSON.mergeArray.map(item => item.toMergePDFdocument);
+
+    console.log(resultArray);
+
+    try {
+      await mergeAsync(resultArray, mergeJSON.nieuwPDFdocument);
+      console.log('Successfully merged!');
+    } catch (err) {
+      console.error('Error merging PDF:', err);
+    }
+  }
+}
+
+
+// Promise-wrapper maken
+function mergeAsync(files, dest) {
+  return new Promise((resolve, reject) => {
+    merge(files, dest, (err) => {
+      if (err) {
+        return reject(err);
+      }
+      resolve();
+    });
+  });
+}
+
+function fillParagraph(text, font, fontSize, maxWidth) {
+  var paragraphs = text.split('\n');
+  for (let index = 0; index < paragraphs.length; index++) {
+      var paragraph = paragraphs[index];
+      if (font.widthOfTextAtSize(paragraph, fontSize) > maxWidth) {
+          var words = paragraph.split(' ');
+          var newParagraph = [];
+          var i = 0;
+          newParagraph[i] = [];
+          for (let k = 0; k < words.length; k++) {
+              var word = words[k];
+              newParagraph[i].push(word);
+              if (font.widthOfTextAtSize(newParagraph[i].join(' '), fontSize) > maxWidth) {
+                  newParagraph[i].splice(-1); // retira a ultima palavra
+                  i = i + 1;
+                  newParagraph[i] = [];
+                  newParagraph[i].push(word);
+              }
+          }
+          paragraphs[index] = newParagraph.map(p => p.join(' ')).join('\n');
+      }
+  }
+  return paragraphs.join('\n');
+}
+
+
+function filterCharSet (string, font) {
+  const charSet = font.getCharacterSet()
+  for (let i = 0; i < string.length; i++) {
+    if (string[i] && !charSet.includes(string[i])) string[i] = '?'
+  }
+  string = string.replace(/[\uE000-\uF8FF]/g, '?')
+  string = string.replace(/[^\w\s!?{}()-;:"'*@#$%&+=]/g, '?')
+  return string
+}
+
+async function samenstellenPDF_Voorblad(setletter, filiaalnummer, documentnummer, oorsprongcode, pdfJSON) {
+  console.log('Net voor Parse json: pdfJSON');
+  const pagesPDF = JSON.parse(pdfJSON);
+  console.log('pagesPDF voorblad json : ' + JSON.stringify(pagesPDF));
+
+  const voorblad = pagesPDF.voorblad.offerteInfo;
+  const voorbladConfig = pagesPDF.voorblad.pdfConfig;
+  const pathPDF = pagesPDF.voorblad.pdfPath;
+  const path = pathPDF[1].voorbladPath.voorblad;
+
+  let doc = new PDFKitDocument({ size: "A4", margin: 0 });
+  registerFonts(doc);
+
+  try {
+    console.log("Start images downloaden en plaatsen...");
+    const results = await generateVoorbladImages(doc, voorblad, voorbladConfig, path);
+    results.forEach((result, index) => {
+      if (result.status === "rejected") {
+        console.warn(`Error in image batch ${index}: ${result.reason}`);
+      }
+    });
+    console.log("Alle images geplaatst");
+
+    generateVoorbladKlantInformatie(doc, voorblad, voorbladConfig);
+
+    // ⚠️ Eerst de output-stream starten
+    const writeStream = fs.createWriteStream(path);
+    doc.pipe(writeStream);
+
+    // ⚠️ Pas na ALLE afbeeldingen en tekst het document sluiten
+    doc.end();
+
+    // Optioneel wachten tot het schrijven naar schijf klaar is
+    await new Promise((resolve, reject) => {
+      writeStream.on("finish", resolve);
+      writeStream.on("error", reject);
+    });
+
+    console.log("PDF succesvol geschreven:", path);
+  } catch (err) {
+    console.error("Fout tijdens PDF-generatie:", err);
+    throw err;
+  }
+}
+
+
+function generateHeader(doc, voorblad) {
+	try {
+  if (fs.existsSync(voorblad.overlayImage)) {
+    doc
+    .image(voorblad.overlayImage, 1, 1 ,{width: 600} );
+  }
+} catch(err) {
+  //console.error(err)
+}  
+  
+    
+}
+
+function generateVoorbladKlantInformatie(doc, voorblad, voorbladConfig) {
+   
+  
+  const klantInformatieTop = voorbladConfig[1].offerteInfoConst.tekstTop;
+  const klantInformatieTekst = voorbladConfig[1].offerteInfoConst.tekst;
+  const klantInformatieVariabele = voorbladConfig[1].offerteInfoConst.variabele;
+
+  doc
+    .font('novumreg')
+    .fontSize(10)
+	.text(voorbladConfig[0].offerteInfoText.klant, klantInformatieTekst, klantInformatieTop)
+	.text(voorblad.klant, klantInformatieVariabele, klantInformatieTop)
+	
+    .text(voorbladConfig[0].offerteInfoText.offerte, klantInformatieTekst, klantInformatieTop + 15)
+	.text(voorblad.offerte, klantInformatieVariabele, klantInformatieTop + 15)
+	
+    .text(voorbladConfig[0].offerteInfoText.datum, klantInformatieTekst, klantInformatieTop + 30) 
+    .text(voorblad.datum, klantInformatieVariabele, klantInformatieTop + 30)
+	.rect(voorbladConfig[2].offerteRectangle.xOffset,
+          voorbladConfig[2].offerteRectangle.yOffset,
+		  voorbladConfig[2].offerteRectangle.width,
+		  voorbladConfig[2].offerteRectangle.height,
+		 { color: '808080'})
+    .strokeColor("#aaaaaa")
+    .stroke();
+    
+	doc
+	.font('novumbold')
+	.fontSize(18)
+	.text(voorblad.auto, voorbladConfig[1].offerteInfoConst.autoXoffset, voorbladConfig[1].offerteInfoConst.autoYoffset, {color: '00008B'});
+   
+    //.moveDown();
+
+  //generateHr(doc, 252);
+}
+
+function generateVoorbladImages(doc, voorblad, voorbladConfig, path, callback) {
+	console.log('generateVoorbladImages');
+var exterieurUrl = [voorblad.exterieurUrl] ;
+console.log('exterieurUrl: ' + exterieurUrl);	
+var interieurUrl = [voorblad.interieurUrl] ;
+console.log('interieurUrl: ' + interieurUrl);	
+var achterkantUrl = [voorblad.achterkantUrl] ;
+console.log('achterkantUrl: ' + achterkantUrl);	
+var wheelsUrl = [voorblad.wheelsUrl] ;	
+console.log('wielen url: ' + wheelsUrl);
+
+
+//console.log(voorblad.imagesUrls.exterieurUrl);
+//var Urls = ['https://qacas.volvocars.com/image/vbsnext-v4/exterior/MY19_1817/525/33/12/61400/R141/_/JF02/TG02/_/_/_/SR05/_/_/JB18_f12_fJF02/T20M/default.jpg?market=nl&w=320'];
+console.log('voorbladConfig[3].imageExterieur.xOffset' +voorbladConfig[3].imageExterieur.xOffset );
+
+// helper: async.each in een Promise wrappen
+  function runEach(urls, iterator) {
+    return new Promise((resolve, reject) => {
+      async.each(
+        urls,
+        (url, callback) => {
+        if (!url || url.trim() === "") {
+          console.log("Lege URL overgeslagen");
+          return callback(); // sla over, maar geen fout
+        }
+        iterator(url, callback);
+      },
+        (err) => (err ? reject(err) : resolve("done"))
+      );
+    });
+  }
+
+
+function imageExterieurtoPDF(url, callback ){
+	console.log('url ext ' +url);
+	request({
+    url: url,
+    encoding: null,
+    headers: {
+      "Connection": "keep-alive",
+      "Cache-Control": "max-age=0",
+      "sec-ch-ua": `"Not;A=Brand";v="99", "Google Chrome";v="139", "Chromium";v="139"`,
+      "sec-ch-ua-mobile": "?0",
+      "sec-ch-ua-platform": `"Windows"`,
+      "Upgrade-Insecure-Requests": "1",
+      "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36",
+      "Accept": "image/png,*/*;q=0.8",
+      "Sec-Fetch-Site": "none",
+      "Sec-Fetch-Mode": "navigate",
+      "Sec-Fetch-User": "?1",
+      "Sec-Fetch-Dest": "document",
+      "Accept-Encoding": "gzip, deflate, br, zstd",
+      "Accept-Language": "nl-NL,nl;q=0.9"
+    }
+  }, function(error, response, body){
+		console.log('imageExterieurtoPDF statusCode ' + response.statusCode); 
+		if(!error && response.statusCode == 200){
+			drawImageInBox(doc, body, voorbladConfig[3].imageExterieur, voorblad.newOrUsed, (err) => {
+          if (err) return callback(err);
+          callback(null, "done");
+        });
+			
+		//	doc.image(body,
+		//	voorbladConfig[3].imageExterieur.xOffset,
+	//		voorbladConfig[3].imageExterieur.yOffset,
+     //       {width: voorbladConfig[3].imageExterieur.width,
+	//		 height: voorbladConfig[3].imageExterieur.height} )
+           
   
 
-console.log('Net voor Parse json: pdfJSON');
-var mergePDF = JSON.parse(pdfJSON);
+//doc.image(body, 350, 265, { width: 200, height: 100})
+//   .text('Stretch', 350, 250)
+            
+			 
+	//	callback(error, "done");
+    } else {
+      callback(error || new Error("Status " + response.statusCode));
+    }	
+		 
+	});
+}
 
-console.log('Net na Parse json: pdfJSON ' +mergePDF.merge.length);
-
-//const mergePDF =  {"merge":[{"nieuwPDFdocument":"/volvo/temp/PRO010004000402_signed.pdf","mergeArray":[{"toMergePDFdocument":"/volvo/temp/PDFSGNDOC_01_000040004_2.pdf"}, {"toMergePDFdocument":"/volvo/temp/PRO010004000402.pdf"}]}]}
-for (i = 0; i < mergePDF.merge.length; i++) {
-  const mergeJSON = mergePDF.merge[i];
-
-  // Initialiseer een lege array om de objecten in op te slaan
-const resultArray = [];
+ 
+ 
 
 
+ 
 
-// Doorloop de 'merge' array in de JSON
-mergePDF.merge.forEach(item => {
-  // Voeg het object toe aan de array, waarbij de 'mergeArray' wordt uitgesplitst en direct toegevoegd
-  resultArray.push(
+function imageInterieurtoPDF(url, callback) {
+	console.log('imageInterieur url ext ' +url);
+  request({
+    url: url,
+    encoding: null,
+    headers: {
+      "Connection": "keep-alive",
+      "Cache-Control": "max-age=0",
+      "sec-ch-ua": `"Not;A=Brand";v="99", "Google Chrome";v="139", "Chromium";v="139"`,
+      "sec-ch-ua-mobile": "?0",
+      "sec-ch-ua-platform": `"Windows"`,
+      "Upgrade-Insecure-Requests": "1",
+      "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36",
+      "Accept": "image/png,*/*;q=0.8",
+      "Sec-Fetch-Site": "none",
+      "Sec-Fetch-Mode": "navigate",
+      "Sec-Fetch-User": "?1",
+      "Sec-Fetch-Dest": "document",
+      "Accept-Encoding": "gzip, deflate, br, zstd",
+      "Accept-Language": "nl-NL,nl;q=0.9"
+    }
+  }, function (error, response, body) {
+    console.log('imageInterieurtoPDF statusCode ' + response.statusCode);
+    if (!error && response.statusCode === 200) {
+			drawImageInBox(doc, body, voorbladConfig[4].imageInterieur, voorblad.newOrUsed, (err) => {
+          if (err) return callback(err);
+          callback(null, "done");
+        });
       
-      ...item.mergeArray.map(mergeItem => mergeItem.toMergePDFdocument)
-  );
-});
-
-// Log de resulterende array naar de console
-console.log(resultArray);
-
-
-
-merge( resultArray, mergeJSON.nieuwPDFdocument, function(err) {
-if(err) {
-  return console.log(err)
+    } else {
+      callback(error || new Error("Status " + response.statusCode));
+    }
+  });
 }
-console.log('Successfully merged!')
-});
+
+function imageAchterkantToPDF(url, callback ){
+	request({
+    url: url,
+    encoding: null,
+    headers: {
+      "Connection": "keep-alive",
+      "Cache-Control": "max-age=0",
+      "sec-ch-ua": `"Not;A=Brand";v="99", "Google Chrome";v="139", "Chromium";v="139"`,
+      "sec-ch-ua-mobile": "?0",
+      "sec-ch-ua-platform": `"Windows"`,
+      "Upgrade-Insecure-Requests": "1",
+      "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36",
+      "Accept": "image/png,*/*;q=0.8",
+      "Sec-Fetch-Site": "none",
+      "Sec-Fetch-Mode": "navigate",
+      "Sec-Fetch-User": "?1",
+      "Sec-Fetch-Dest": "document",
+      "Accept-Encoding": "gzip, deflate, br, zstd",
+      "Accept-Language": "nl-NL,nl;q=0.9"
+    }
+  },function(error, response, body){
+		console.log('imageAchterkantToPDF statusCode ' + response.statusCode); 
+		if(!error && response.statusCode == 200){
+				drawImageInBox(doc, body, voorbladConfig[5].imageAchterkant, voorblad.newOrUsed, (err) => {
+          if (err) return callback(err);
+          callback(null, "done");
+        });
+  
+
+ 
+			
+		} else {
+			callback(error || new Error("Status " + response.statusCode + ' url: ' + url)); 
+		}
+	});
+} 
+ 
+
+ 
 
 
+ 
+function imageWheelstoPDF(url, callback ){
+	request({
+    url: url,
+    encoding: null,
+    headers: {
+      "Connection": "keep-alive",
+      "Cache-Control": "max-age=0",
+      "sec-ch-ua": `"Not;A=Brand";v="99", "Google Chrome";v="139", "Chromium";v="139"`,
+      "sec-ch-ua-mobile": "?0",
+      "sec-ch-ua-platform": `"Windows"`,
+      "Upgrade-Insecure-Requests": "1",
+      "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36",
+      "Accept": "image/png,*/*;q=0.8",
+      "Sec-Fetch-Site": "none",
+      "Sec-Fetch-Mode": "navigate",
+      "Sec-Fetch-User": "?1",
+      "Sec-Fetch-Dest": "document",
+      "Accept-Encoding": "gzip, deflate, br, zstd",
+      "Accept-Language": "nl-NL,nl;q=0.9"
+    }
+  },function(error, response, body){
+		console.log('imageWheelstoPDF statusCode ' + response.statusCode); 
+		if(!error && response.statusCode == 200){
+				drawImageInBox(doc, body, voorbladConfig[6].imageWheels, voorblad.newOrUsed, (err) => {
+          if (err) return callback(err);
+          callback(null, "done");
+        });
+			
+		} else {
+			callback(error || new Error("Status " + response.statusCode + ' url: ' + url)); 
+		}
+	});
+} 
+ 
+ 
+ // Promise.allSettled over alle batches
+  return Promise.allSettled([
+    runEach(exterieurUrl, imageExterieurtoPDF),
+    runEach(interieurUrl, imageInterieurtoPDF),
+	runEach(achterkantUrl, imageAchterkantToPDF),
+    runEach(wheelsUrl, imageWheelstoPDF),
+  ]);
+ 
+ 
+ 
 }
-}	
+
+ 
+
+function drawImageInBox(doc, imageBuffer, box, newOrUsed, callback) {
+  try {
+	console.log('drawImageInBox function');
+	doc.moveTo(0, 0);
+	//doc.text('Marco', 0, 0); // verplaats cursor naar absolute 0,0
+	
+    const dimensions = imageSize(imageBuffer);
+    const originalWidth = dimensions.width;
+    const originalHeight = dimensions.height;
+	
+	console.log('originalWidth: ' + originalWidth);
+	console.log('originalHeight: ' + originalHeight);
+
+    // Verhouding bepalen om binnen box te passen
+    const ratio = Math.min(
+      box.width / originalWidth,
+      box.height / originalHeight
+    );
+	
+	 let scaledWidth = box.width;
+     let scaledHeight = box.height;	
+	console.log('newOrUsed: ' +newOrUsed);
+    if (newOrUsed === 'G') {
+      scaledWidth = originalWidth * ratio;
+      scaledHeight = originalHeight * ratio;
+	}	
+	
+	console.log('scaledWidth: ' +scaledWidth);
+	console.log('scaledHeight: ' +scaledHeight);
+	
+
+    // Centrerings-offsets berekenen
+   //  const x = box.xOffset + (box.width - scaledWidth) / 2;
+ 	const x = box.xOffset;
+   //  const y = box.yOffset + (box.height - scaledHeight) / 2;
+	const y = box.yOffset;
+	
+	
+
+     console.log('x: '+ x);
+	 console.log('y: '+ y);
+    // Afbeelding tekenen
+    doc.image(imageBuffer, x, y, {
+      width: scaledWidth,
+	  height: scaledHeight 
+    });
+
+    if (callback) callback(null);
+  } catch (err) {
+    if (callback) callback(err);
+  }
+}
+
+
+
+
+	
+
+function generateHr(doc, y) {
+  doc
+    .strokeColor("#aaaaaa")
+    .lineWidth(1)
+    .moveTo(50, y)
+    .lineTo(550, y)
+    .stroke();
+}
+
+
+
+function formatDate(date) {
+  const day = date.getDate();
+  const month = date.getMonth() + 1;
+  const year = date.getFullYear();
+
+  return year + "/" + month + "/" + day;
+}
+function registerFonts(doc){
+	doc.registerFont('novumbold', '/apf3812home/fonts/NOVUMBOLD.TTF');
+	doc.registerFont('novumlight', '/apf3812home/fonts/NOVUMLIGHT.TTF');
+	doc.registerFont('novumreg', '/apf3812home/fonts/NOVUMREG.TTF');
+}
 
 
 function fillParagraph(text, font, fontSize, maxWidth) {
@@ -550,10 +976,72 @@ function filterCharSet (string, font) {
   string = string.replace(/[^\w\s!?{}()-;:"'*@#$%&+=]/g, '?')
   return string
 }
+
+
+async function mergeOverlayWithDocument(setletter, filiaalnummer, documentnummer, oorsprongcode,  pdfJSON){
+ 
+
+  var mergePDF = JSON.parse(pdfJSON);
+  console.log('mergePDF json : ' + JSON.stringify(mergePDF));
+  let pathPDF = mergePDF.mergeOverlay.pdfPath;
+  console.log('Wat is path 1:' +JSON.stringify(pathPDF)); 
+  let overlayPath = pathPDF[0].overlayPath.overlayDocument;
+  console.log('Wat is overlayPath : ' +overlayPath);
+  let pdfDocumentPath = pathPDF[1].pdfDocumentPath.pdfDocument;
+  console.log('Wat is pdfDocumentPath : ' +pdfDocumentPath);
+  let mergedPath = pathPDF[2].mergePath.mergeDocument;
+  console.log('Wat is mergedPath : ' +mergedPath); 
+  
+  const bytes1 = fs.readFileSync(overlayPath);
+  const bytes2 = fs.readFileSync(pdfDocumentPath);
+
+  const src1 = await PDFDocument.load(bytes1);
+  const src2 = await PDFDocument.load(bytes2);
+
+  const out = await PDFDocument.create();
+
+  const [page1] = src1.getPages();
+  const [page2] = src2.getPages();
+
+  const e1 = await out.embedPage(page1);
+  const e2 = await out.embedPage(page2);
+
+  // Kies formaat van basispagina (bijv. die van doc1)
+  const width = e1.width;
+  const height = e1.height;
+
+  const newPage = out.addPage([width, height]);
+
+  // Tekenen bovenop elkaar → allebei op (0,0), zelfde grootte
+  newPage.drawPage(e1, {
+    x: 0,
+    y: 0,
+    width: width,
+    height: height,
+  });
+
+  newPage.drawPage(e2, {
+    x: 0,
+    y: 0,
+    width: width,
+    height: height,
+  });
+
+  const pdfBytes = await out.save();
+  fs.writeFileSync(mergedPath, pdfBytes);
+
+  console.log("✅ Klaar! Overlay is 1 pagina:", out.getPageCount());
+}
+
+//overlay('doc1.pdf', 'doc2.pdf', 'overlay.pdf');
+
+ 
 //samenstellenPDF('{}')
 module.exports = {
   samenstellenPDF_Checklist: samenstellenPDF_Checklist,
   samenstellenPDF_Handtekening : samenstellenPDF_Handtekening,
   mergePDFdocumenten: mergePDFdocumenten,
+  samenstellenPDF_Voorblad: samenstellenPDF_Voorblad,
+  mergeOverlayWithDocument: mergeOverlayWithDocument,
   
   };
