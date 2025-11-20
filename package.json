@@ -13,6 +13,7 @@
     "async": "^3.2.6",
     "axios": "^1.11.0",
     "easy-pdf-merge": "^0.2.6",
+    "image-size": "^2.0.2",
     "odbc": "^2.4.8",
     "pdf-lib": "^1.17.1",
     "pdfkit": "^0.17.1",
