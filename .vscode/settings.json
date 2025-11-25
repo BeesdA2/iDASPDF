@@ -1,0 +1,7 @@
+{
+    "arcad.restApiServer.port": 10000,
+    "arcad.restApiServer.useHTTPS": false,
+    "arcad.crossReferences.calls.include.literalReferences": true,
+    "arcad.crossReferences.files.constraints": true,
+    "code-for-ibmi.connections": []
+}

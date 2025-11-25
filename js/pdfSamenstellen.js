@@ -1,4 +1,3 @@
-
 const { PDFDocument, StandardFonts, degrees, rgb } = require('pdf-lib');
 const { insertDOCDDPSQL } = require("./pdfDB.js"); 
 const fs = require('fs');
@@ -1046,4 +1045,3 @@ module.exports = {
   mergeOverlayWithDocument: mergeOverlayWithDocument,
   
   };
->>>>>>> 02901d6974bd141c77a78518318f2a9273d235a1
