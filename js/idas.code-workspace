@@ -1,0 +1,12 @@
+{
+	"folders": [
+		{
+			"path": ".."
+		}
+	],
+	"settings": {
+		"arcad.crossReferences.calls.include.literalReferences": true,
+		"arcad.crossReferences.files.constraints": true,
+		"code-for-ibmi.connections": []
+	}
+}

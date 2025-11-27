@@ -699,7 +699,7 @@ function imageExterieurtoPDF(url, callback ){
       "Accept-Language": "nl-NL,nl;q=0.9"
     }
   }, function(error, response, body){
-		console.log('imageExterieurtoPDF statusCode ' + response.statusCode); 
+		//console.log('imageExterieurtoPDF statusCode ' + response.statusCode); 
 		if(!error && response.statusCode == 200){
 			drawImageInBox(doc, body, voorbladConfig[3].imageExterieur, voorblad.newOrUsed, (err) => {
           if (err) return callback(err);
@@ -754,7 +754,7 @@ function imageInterieurtoPDF(url, callback) {
       "Accept-Language": "nl-NL,nl;q=0.9"
     }
   }, function (error, response, body) {
-    console.log('imageInterieurtoPDF statusCode ' + response.statusCode);
+    //console.log('imageInterieurtoPDF statusCode ' + response.statusCode);
     if (!error && response.statusCode === 200) {
 			drawImageInBox(doc, body, voorbladConfig[4].imageInterieur, voorblad.newOrUsed, (err) => {
           if (err) return callback(err);
@@ -788,7 +788,7 @@ function imageAchterkantToPDF(url, callback ){
       "Accept-Language": "nl-NL,nl;q=0.9"
     }
   },function(error, response, body){
-		console.log('imageAchterkantToPDF statusCode ' + response.statusCode); 
+		//console.log('imageAchterkantToPDF statusCode ' + response.statusCode); 
 		if(!error && response.statusCode == 200){
 				drawImageInBox(doc, body, voorbladConfig[5].imageAchterkant, voorblad.newOrUsed, (err) => {
           if (err) return callback(err);
@@ -830,7 +830,7 @@ function imageWheelstoPDF(url, callback ){
       "Accept-Language": "nl-NL,nl;q=0.9"
     }
   },function(error, response, body){
-		console.log('imageWheelstoPDF statusCode ' + response.statusCode); 
+	//	console.log('imageWheelstoPDF statusCode ' + response.statusCode); 
 		if(!error && response.statusCode == 200){
 				drawImageInBox(doc, body, voorbladConfig[6].imageWheels, voorblad.newOrUsed, (err) => {
           if (err) return callback(err);
