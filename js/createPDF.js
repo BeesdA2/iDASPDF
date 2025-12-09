@@ -1,5 +1,6 @@
 const { samenstellenPDF_Checklist } = require("./pdfSamenstellen.js"); 
 const { samenstellenPDF_Handtekening } = require("./pdfSamenstellen.js"); 
+const { samenstellenPDF_Handtekening_Verkoper } = require("./pdfSamenstellen.js"); 
 const { mergePDFdocumenten } = require("./pdfSamenstellen.js"); 
 const { samenstellenPDF_Voorblad } = require("./pdfSamenstellen.js"); 
 const { mergeOverlayWithDocument } = require("./pdfSamenstellen.js"); 
@@ -31,6 +32,15 @@ async function  aanmakenPDF (setletter, pdfGUID){
  // samestellen PDF document tbv Handtekening
    console.log("samenstellen PDF HANDTEKENING");
    const respSamenstellenPDF_Handtekening = await samenstellenPDF_Handtekening (setletter, jsonPDFfile[0].PDFFILE_FILIAAL, jsonPDFfile[0].PDFFILE_DOCUMENT, jsonPDFfile[0].PDFFILE_OORSPRONG, jsonPDFfile[0].PDFFILE_JSON);
+   let   response  = await respSamenstellenPDF_Handtekening;
+  }
+  
+  
+   if ((jsonPDFfile[0].PDFFILE_KENMERK).trim() === 'HANDTEKENING_VERKOPER')
+  {		 
+ // samestellen PDF document tbv Handtekening
+   console.log("samenstellen PDF HANDTEKENING");
+   const respSamenstellenPDF_Handtekening = await samenstellenPDF_Handtekening_Verkoper (setletter, jsonPDFfile[0].PDFFILE_FILIAAL, jsonPDFfile[0].PDFFILE_DOCUMENT, jsonPDFfile[0].PDFFILE_OORSPRONG, jsonPDFfile[0].PDFFILE_JSON);
    let   response  = await respSamenstellenPDF_Handtekening;
   }
   

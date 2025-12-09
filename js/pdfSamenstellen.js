@@ -250,7 +250,7 @@ filenamePDF = pageArray.handtekening_png_naam;
   });
 
   // Voeg de titel "Ondertekenen" toe boven de veldset
-  page.drawText('Ondertekenen PDF document', {
+  page.drawText('', {
       x: fieldsetX + 10,
       y: fieldsetY + fieldsetHeight + 10,
       size: fontSize,
@@ -259,17 +259,25 @@ filenamePDF = pageArray.handtekening_png_naam;
   });
 
 
+
+
   // Label rectangle :
-const labelWidth = 420;
+const labelWidthMax = 460;
+let labelWidth = 210;
+
+console.log('##### Wat is oorsprongcode: ' + oorsprongcode);
+if (oorsprongcode !== '1')
+{ labelWidth = 460;
+} 
+
   const labelHeight = 30;
 
   // Teken een label (naam) met de tekst "John Doe" binnen de veldset
   const labelX1 = fieldsetX + 20;
   const labelY1 = fieldsetY + fieldsetHeight - 70;
  
-
-// Naam label
-  page.drawText('Naam: ', {
+ // Documentnaam label
+  page.drawText('Documentnaam: ', {
       x: labelX1 ,
       y: labelY1 + 35,
       size: fontSize - 4,
@@ -281,14 +289,14 @@ const labelWidth = 420;
   page.drawRectangle({
       x: labelX1 ,
       y: labelY1 ,
-      width: labelWidth,
+      width: labelWidthMax,
       height: labelHeight,
       borderColor: rgb(0, 0, 0),
       borderWidth: 1,
   });
 
   // Tekst label
-  page.drawText( pageArray.naam, {
+  page.drawText(pageArray.documentnaam, {
       x: labelX1 + 10,
       y: labelY1 + 10,
       size: fontSize - 4,
@@ -296,13 +304,15 @@ const labelWidth = 420;
       color: rgb(0, 0, 0),
   });
 
-// Teken een label (email) met de tekst "geen@mail.nl" binnen de veldset
+
+
   const labelX2 = fieldsetX + 20;
   const labelY2 = fieldsetY + fieldsetHeight - 140;
- 
-
-// Naam label
-  page.drawText('E-mail: ', {
+  
+  let textfield_textUTF_naamKlant = Buffer.from(pageArray.naam, 'base64').toString('utf8');
+  
+// Naam klant label
+  page.drawText('Naam klant: ', {
       x: labelX2 ,
       y: labelY2 + 35,
       size: fontSize - 4,
@@ -321,22 +331,51 @@ const labelWidth = 420;
   });
 
   // Tekst label
-  page.drawText(pageArray.email, {
+  page.drawText( textfield_textUTF_naamKlant, {
       x: labelX2 + 10,
       y: labelY2 + 10,
       size: fontSize - 4,
       font: timesRomanFont,
       color: rgb(0, 0, 0),
   });
+  
+  if (oorsprongcode === '10')
+  {
+  // Naam verkoper label
+  page.drawText('Naam verkoper: ', {
+      x: labelX2 +250 ,
+      y: labelY2 + 35,
+      size: fontSize - 4,
+      font: timesRomanFont,
+      color: rgb(0, 0, 0),
+  });
 
+  // Tekst achtergrond
+  page.drawRectangle({
+      x: labelX2 +250,
+      y: labelY2 ,
+      width: labelWidth,
+      height: labelHeight,
+      borderColor: rgb(0, 0, 0),
+      borderWidth: 1,
+  });
 
-    // Teken een label (Type auto) met de tekst "XC40 T4" binnen de veldset
+  // Tekst label
+  page.drawText( '', {
+      x: labelX2 + 260,
+      y: labelY2 + 10,
+      size: fontSize - 4,
+      font: timesRomanFont,
+      color: rgb(0, 0, 0),
+  });
+  }
+   // Teken een label (Type auto) met de tekst "XC40 T4" binnen de veldset
   const labelX3 = fieldsetX + 20;
   const labelY3 = fieldsetY + fieldsetHeight - 210;
  
 
-// Naam label
-  page.drawText('Documentnaam: ', {
+// E-mail klant label
+  page.drawText('E-mail klant: ', {
       x: labelX3 ,
       y: labelY3 + 35,
       size: fontSize - 4,
@@ -354,15 +393,46 @@ const labelWidth = 420;
       borderWidth: 1,
   });
 
-  // Tekst label
-  page.drawText(pageArray.documentnaam, {
+  // Tekst klant label
+  page.drawText(pageArray.email, {
       x: labelX3 + 10,
       y: labelY3 + 10,
       size: fontSize - 4,
       font: timesRomanFont,
       color: rgb(0, 0, 0),
   });
+if (oorsprongcode === '10')
+{
+// E-mail verkoper label
+  page.drawText('E-mail verkoper: ', {
+      x: labelX3 + 250,
+      y: labelY3 + 35,
+      size: fontSize - 4,
+      font: timesRomanFont,
+      color: rgb(0, 0, 0),
+  });
 
+  // Tekst achtergrond
+  page.drawRectangle({
+      x: labelX3 + 250,
+      y: labelY3 ,
+      width: labelWidth,
+      height: labelHeight,
+      borderColor: rgb(0, 0, 0),
+      borderWidth: 1,
+  });
+
+  // Tekst verkoper label
+  page.drawText('', {
+      x: labelX3 + 260,
+      y: labelY3 + 10,
+      size: fontSize - 4,
+      font: timesRomanFont,
+      color: rgb(0, 0, 0),
+  });
+
+}
+ 
    // Teken een label (Kenteken) met de tekst "X-999-XX" binnen de veldset
   const labelX4 = fieldsetX + 20;
   const labelY4 = fieldsetY + fieldsetHeight - 280;
@@ -370,8 +440,8 @@ const labelWidth = 420;
 
    
 
-// Naam label
-  page.drawText('Datum en tijd:', {
+// Datum en Tijd tekenen klant label
+  page.drawText('Datum en tijd tekenen klant:', {
       x: labelX4 ,
       y: labelY4 + 35,
       size: fontSize - 4,
@@ -397,14 +467,43 @@ const labelWidth = 420;
       font: timesRomanFont,
       color: rgb(0, 0, 0),
   });
+  if (oorsprongcode === '10')
+  {
+  // Datum en Tijd tekenen verkoper 
+  page.drawText('Datum en tijd tekenen verkoper:', {
+      x: labelX4 +250,
+      y: labelY4 + 35,
+      size: fontSize - 4,
+      font: timesRomanFont,
+      color: rgb(0, 0, 0),
+  });
 
+  // Tekst achtergrond
+  page.drawRectangle({
+      x: labelX4 +250,
+      y: labelY4 ,
+      width: labelWidth,
+      height: labelHeight,
+      borderColor: rgb(0, 0, 0),
+      borderWidth: 1,
+  });
+
+  // Tekst label
+  page.drawText('', {
+      x: labelX4 + 260,
+      y: labelY4 + 10,
+      size: fontSize - 4,
+      font: timesRomanFont,
+      color: rgb(0, 0, 0),
+  });
+  }
    // Teken een label (Handtekening) met de plaatje binnen de veldset
   const labelX5 = fieldsetX + 20;
   const labelY5= fieldsetY + fieldsetHeight - 400;
  
 
 // Naam label
-  page.drawText('Handtekening: ', {
+  page.drawText('Handtekening klant: ', {
       x: labelX5 ,
       y: labelY5 + 80,
       size: fontSize - 4,
@@ -422,6 +521,28 @@ const labelWidth = 420;
       borderWidth: 1,
   });
 
+if (oorsprongcode === '10')
+{
+// Naam label
+  page.drawText('Handtekening verkoper: ', {
+      x: labelX5 +250,
+      y: labelY5 + 80,
+      size: fontSize - 4,
+      font: timesRomanFont,
+      color: rgb(0, 0, 0),
+  });
+
+  // Vierkant achtergrond
+  page.drawRectangle({
+      x: labelX5 +250,
+      y: labelY5 - 110,
+      width: labelWidth,
+      height: labelHeight + 150,
+      borderColor: rgb(0, 0, 0),
+      borderWidth: 1,
+  });
+} 
+  
   // Read the image file from the file system
 const imagePath = '../../../../../../www/profoundui/htdocs/signatures/' + pageArray.handtekening_png_naam + '_signature.png'; // Change this to your image path
 console.log('imagePath ' + imagePath);
@@ -441,9 +562,14 @@ if (ext === '.jpg' || ext === '.jpeg') {
 }
 
 
+let imageScale = 0.25;
+if (oorsprongcode !== '1')
+{
+	imageScale = 0.6;
+}
 
 // Get the dimensions of the image
-const { width, height } = embeddedImage.scale(0.6);
+const { width, height } = embeddedImage.scale(imageScale);
 
 // Place the image on the page
 page.drawImage(embeddedImage, {
@@ -474,7 +600,287 @@ fs.writeFileSync(filePath, pdfBytes);
 
 
 
+// 
+async  function  samenstellenPDF_Handtekening_Verkoper(setletter, filiaalnummer, documentnummer, oorsprongcode, pdfJSON){
+  
+  console.log('Net voor Parse json: pdfJSON');
+var pagesPDF = JSON.parse(pdfJSON);
+console.log('Net na Parse json: pdfJSON');
+  
+  let pathFileName = pagesPDF.pages[0].pdfArray[0].pdfDocumentPath + pagesPDF.pages[0].pdfArray[0].pdfDocumentFile;
+  console.log('pathFileName: :' + pathFileName);
+  // 1. Bestaande PDF inlezen
+  const existingPdfBytes = await fs.promises.readFile(pathFileName);
+
+  // 2. PDF inladen met pdf-lib
+  const pdfDoc = await PDFDocument.load(existingPdfBytes);
+
+  // 3. Aantal pagina's ophalen
+  const pages = pdfDoc.getPages();
+  const pageCount = pages.length;
+  console.log("Aantal pagina's:", pageCount);
+
+  // 4. Laatste pagina selecteren
+  const lastPage = pages[pageCount - 1];
+
+
+
+let filenamePDF = '';
+
+  // Add a blank page to the document
+
+  for (i = 0; i < pagesPDF.pages.length; i++) {
+  const pageJSON = pagesPDF.pages[i];
+  
+  
+  for (x = 0; x < pageJSON.pdfArray.length; x++) {
+  const pageArray = pageJSON.pdfArray[x];  
+
+//filenamePDF = pageArray.verkoperHandtekeningPNG + '.PDF';
+filenamePDF = pageArray.pdfDocumentFile;
+
+
+  // Stel de standaard lettertype en grootte in
+  const timesRomanFont = await pdfDoc.embedFont(StandardFonts.TimesRoman);
+  const fontSize = 18;
+
+  // Teken een veldset (rectangular box) op de pagina
+  const fieldsetX = 50;
+  const fieldsetY = 150;
+  const fieldsetWidth = 500;
+  const fieldsetHeight = 550;
+
+  lastPage.drawRectangle({
+      x: fieldsetX,
+      y: fieldsetY,
+      width: fieldsetWidth,
+      height: fieldsetHeight,
+      borderColor: rgb(0, 0, 0),
+      borderWidth: 2,
+  });
+
+  // Voeg de titel "Ondertekenen" toe boven de veldset
+  lastPage.drawText('', {
+      x: fieldsetX + 10,
+      y: fieldsetY + fieldsetHeight + 10,
+      size: fontSize,
+      font: timesRomanFont,
+      color: rgb(0, 0, 0),
+  });
+
+
+
+
+  // Label rectangle :
+const labelWidthMax = 460;
+let labelWidth = 210;
+
+
+
+  const labelHeight = 30;
+
+  // Teken een label (naam) met de tekst "John Doe" binnen de veldset
+  const labelX1 = fieldsetX + 20;
+  const labelY1 = fieldsetY + fieldsetHeight - 70;
  
+ 
+  const labelX2 = fieldsetX + 20;
+  const labelY2 = fieldsetY + fieldsetHeight - 140;
+  
+  let textfield_textUTF_naamVerkoper = Buffer.from(pageArray.verkoperNaam, 'base64').toString('utf8');
+  
+
+ 
+  // Naam verkoper label
+  lastPage.drawText('Naam verkoper: ', {
+      x: labelX2 +250 ,
+      y: labelY2 + 35,
+      size: fontSize - 4,
+      font: timesRomanFont,
+      color: rgb(0, 0, 0),
+  });
+
+  // Tekst achtergrond
+  lastPage.drawRectangle({
+      x: labelX2 +250,
+      y: labelY2 ,
+      width: labelWidth,
+      height: labelHeight,
+      borderColor: rgb(0, 0, 0),
+      borderWidth: 1,
+  });
+
+  // Tekst label
+  lastPage.drawText( textfield_textUTF_naamVerkoper, {
+      x: labelX2 + 260,
+      y: labelY2 + 10,
+      size: fontSize - 4,
+      font: timesRomanFont,
+      color: rgb(0, 0, 0),
+  });
+  
+   // Teken een label (Type auto) met de tekst "XC40 T4" binnen de veldset
+  const labelX3 = fieldsetX + 20;
+  const labelY3 = fieldsetY + fieldsetHeight - 210;
+ 
+
+let textfield_textUTF_emailVerkoper = Buffer.from(pageArray.verkoperEmail, 'base64').toString('utf8');
+
+// E-mail verkoper label
+  lastPage.drawText('E-mail verkoper: ', {
+      x: labelX3 + 250,
+      y: labelY3 + 35,
+      size: fontSize - 4,
+      font: timesRomanFont,
+      color: rgb(0, 0, 0),
+  });
+
+  // Tekst achtergrond
+  lastPage.drawRectangle({
+      x: labelX3 + 250,
+      y: labelY3 ,
+      width: labelWidth,
+      height: labelHeight,
+      borderColor: rgb(0, 0, 0),
+      borderWidth: 1,
+  });
+
+  // Tekst verkoper label
+  lastPage.drawText( textfield_textUTF_emailVerkoper, {
+      x: labelX3 + 260,
+      y: labelY3 + 10,
+      size: fontSize - 4,
+      font: timesRomanFont,
+      color: rgb(0, 0, 0),
+  });
+
+   
+ 
+   // Teken een label (Kenteken) met de tekst "X-999-XX" binnen de veldset
+  const labelX4 = fieldsetX + 20;
+  const labelY4 = fieldsetY + fieldsetHeight - 280;
+ 
+
+   
+
+
+  
+  // Datum en Tijd tekenen verkoper 
+  lastPage.drawText('Datum en tijd tekenen verkoper:', {
+      x: labelX4 +250,
+      y: labelY4 + 35,
+      size: fontSize - 4,
+      font: timesRomanFont,
+      color: rgb(0, 0, 0),
+  });
+
+  // Tekst achtergrond
+  lastPage.drawRectangle({
+      x: labelX4 +250,
+      y: labelY4 ,
+      width: labelWidth,
+      height: labelHeight,
+      borderColor: rgb(0, 0, 0),
+      borderWidth: 1,
+  });
+
+  // Tekst label
+  lastPage.drawText( pageArray.verkoperTimestamp, {
+      x: labelX4 + 260,
+      y: labelY4 + 10,
+      size: fontSize - 4,
+      font: timesRomanFont,
+      color: rgb(0, 0, 0),
+  });
+  
+   // Teken een label (Handtekening) met de plaatje binnen de veldset
+  const labelX5 = fieldsetX + 20;
+  const labelY5= fieldsetY + fieldsetHeight - 400;
+ 
+
+
+
+
+// Naam label
+  lastPage.drawText('Handtekening verkoper: ', {
+      x: labelX5 +250,
+      y: labelY5 + 80,
+      size: fontSize - 4,
+      font: timesRomanFont,
+      color: rgb(0, 0, 0),
+  });
+
+  // Vierkant achtergrond
+  lastPage.drawRectangle({
+      x: labelX5 +250,
+      y: labelY5 - 110,
+      width: labelWidth,
+      height: labelHeight + 150,
+      borderColor: rgb(0, 0, 0),
+      borderWidth: 1,
+  });
+ 
+  
+  // Read the image file from the file system
+const imagePath = '../../../../../../www/profoundui/htdocs/signatures/' + pageArray.verkoperHandtekeningPNG + '_signature.png'; // Change this to your image path
+console.log('imagePath ' + imagePath);
+const imageBytes = fs.readFileSync(imagePath);
+
+// Determine the image extension to use the correct method
+const ext = path.extname(imagePath).toLowerCase();
+let embeddedImage;
+
+// Embed the image in the PDF document
+if (ext === '.jpg' || ext === '.jpeg') {
+  embeddedImage = await pdfDoc.embedJpg(imageBytes);
+} else if (ext === '.png') {
+  embeddedImage = await pdfDoc.embedPng(imageBytes);
+} else {
+  throw new Error('Unsupported image format. Only JPEG and PNG are supported.');
+}
+
+
+let imageScale = 0.25;
+if (oorsprongcode !== '1')
+{
+	imageScale = 0.6;
+}
+
+// Get the dimensions of the image
+const { width, height } = embeddedImage.scale(imageScale);
+
+// Place the image on the page
+lastPage.drawImage(embeddedImage, {
+  x: labelX5 + 280, // X coordinate on the page
+  y: labelY5 - 60, // Y coordinate on the page
+  width,      // Width of the image
+  height,     // Height of the image
+});
+
+
+
+}
+  }
+
+
+  // Sla het PDF document op
+  const pdfBytes = await pdfDoc.save();
+ let filename = filenamePDF ; //+ '.pdf';
+
+
+
+
+// For example, `pdfBytes` can be:
+//   • Written to a file in Node
+const filePath = '../../../../../../www/profoundui/htdocs/signatures/' + filename;
+fs.writeFileSync(filePath, pdfBytes);
+  console.log('PDF succesvol gegenereerd: ' + filename);
+} ;
+
+
+
+ 
+
 
 async function mergePDFdocumenten(setletter, filiaalnummer, documentnummer, oorsprongcode, pdfJSON) {
   console.log('Net voor Parse json: pdfJSON');
@@ -699,7 +1105,7 @@ function imageExterieurtoPDF(url, callback ){
       "Accept-Language": "nl-NL,nl;q=0.9"
     }
   }, function(error, response, body){
-		//console.log('imageExterieurtoPDF statusCode ' + response.statusCode); 
+		console.log('imageExterieurtoPDF statusCode ' + response.statusCode); 
 		if(!error && response.statusCode == 200){
 			drawImageInBox(doc, body, voorbladConfig[3].imageExterieur, voorblad.newOrUsed, (err) => {
           if (err) return callback(err);
@@ -754,7 +1160,7 @@ function imageInterieurtoPDF(url, callback) {
       "Accept-Language": "nl-NL,nl;q=0.9"
     }
   }, function (error, response, body) {
-    //console.log('imageInterieurtoPDF statusCode ' + response.statusCode);
+    console.log('imageInterieurtoPDF statusCode ' + response.statusCode);
     if (!error && response.statusCode === 200) {
 			drawImageInBox(doc, body, voorbladConfig[4].imageInterieur, voorblad.newOrUsed, (err) => {
           if (err) return callback(err);
@@ -788,7 +1194,7 @@ function imageAchterkantToPDF(url, callback ){
       "Accept-Language": "nl-NL,nl;q=0.9"
     }
   },function(error, response, body){
-		//console.log('imageAchterkantToPDF statusCode ' + response.statusCode); 
+		console.log('imageAchterkantToPDF statusCode ' + response.statusCode); 
 		if(!error && response.statusCode == 200){
 				drawImageInBox(doc, body, voorbladConfig[5].imageAchterkant, voorblad.newOrUsed, (err) => {
           if (err) return callback(err);
@@ -830,7 +1236,7 @@ function imageWheelstoPDF(url, callback ){
       "Accept-Language": "nl-NL,nl;q=0.9"
     }
   },function(error, response, body){
-	//	console.log('imageWheelstoPDF statusCode ' + response.statusCode); 
+		console.log('imageWheelstoPDF statusCode ' + response.statusCode); 
 		if(!error && response.statusCode == 200){
 				drawImageInBox(doc, body, voorbladConfig[6].imageWheels, voorblad.newOrUsed, (err) => {
           if (err) return callback(err);
@@ -1040,6 +1446,7 @@ async function mergeOverlayWithDocument(setletter, filiaalnummer, documentnummer
 module.exports = {
   samenstellenPDF_Checklist: samenstellenPDF_Checklist,
   samenstellenPDF_Handtekening : samenstellenPDF_Handtekening,
+  samenstellenPDF_Handtekening_Verkoper : samenstellenPDF_Handtekening_Verkoper,
   mergePDFdocumenten: mergePDFdocumenten,
   samenstellenPDF_Voorblad: samenstellenPDF_Voorblad,
   mergeOverlayWithDocument: mergeOverlayWithDocument,
