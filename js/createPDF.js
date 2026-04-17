@@ -4,6 +4,7 @@ const { samenstellenPDF_Handtekening_Verkoper } = require("./pdfSamenstellen.js"
 const { mergePDFdocumenten } = require("./pdfSamenstellen.js"); 
 const { samenstellenPDF_Voorblad } = require("./pdfSamenstellen.js"); 
 const { mergeOverlayWithDocument } = require("./pdfSamenstellen.js"); 
+const { generateCampagnePdf } = require("./pdfSamenstellen.js"); 
 
 const { getPDFfile } = require("./pdfDB.js"); 
  
@@ -68,6 +69,14 @@ async function  aanmakenPDF (setletter, pdfGUID){
    console.log("samenstellen voorblad");
    const respVoorbladDocument = await samenstellenPDF_Voorblad (setletter, jsonPDFfile[0].PDFFILE_FILIAAL, jsonPDFfile[0].PDFFILE_DOCUMENT, jsonPDFfile[0].PDFFILE_OORSPRONG, jsonPDFfile[0].PDFFILE_JSON);
    let   response  = await respVoorbladDocument;
+  }
+
+  if ((jsonPDFfile[0].PDFFILE_KENMERK).trim() === 'CAMPAGNE')
+  {		 
+ // samestellen PDF document tbv Handtekening
+   console.log("generateCampagnePdf");
+   const respGenerateCampagnePdf = await generateCampagnePdf (setletter, jsonPDFfile[0].PDFFILE_FILIAAL, jsonPDFfile[0].PDFFILE_DOCUMENT, jsonPDFfile[0].PDFFILE_OORSPRONG, jsonPDFfile[0].PDFFILE_JSON);
+   let   response  = await respGenerateCampagnePdf;
   }
 
   // samestellen PDF document

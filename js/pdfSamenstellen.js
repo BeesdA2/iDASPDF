@@ -1441,6 +1441,202 @@ async function mergeOverlayWithDocument(setletter, filiaalnummer, documentnummer
 
 //overlay('doc1.pdf', 'doc2.pdf', 'overlay.pdf');
 
+async function generateCampagnePdf(setletter, filiaalnummer, documentnummer, oorsprongcode,  pdfJSON){
+ 
+
+  const campagnePDF = JSON.parse(pdfJSON);
+  console.log('campagnePDF json : ' + JSON.stringify(campagnePDF));
+  
+  const data =  campagnePDF.pdf;
+  console.log('data json : ' + JSON.stringify(data));
+  
+  let pathPDF = campagnePDF.pdf.pdfPath;
+  console.log('Wat is path :' +JSON.stringify(pathPDF));
+  
+  let fileName = campagnePDF.pdf.pdfFileName;
+  console.log('Wat is fileName :' +JSON.stringify(fileName));
+  
+  const PRIMARY_COLOR = "#1f4e79";
+  const LIGHT_GRAY = "#e6e6e6";
+
+  const doc = new PDFKitDocument({
+    margin: 50,
+    size: "A4"
+  });
+
+  //const fileName = `report_${data.order.orderNumber}.pdf`;
+  const pathFileName = pathPDF.trim() + '/' + fileName.trim();
+  console.log('Wat is pathFileName:' +JSON.stringify(pathFileName));
+  doc.pipe(fs.createWriteStream(pathFileName));
+
+  // ===============================
+  // HEADER
+  // ===============================
+
+  doc
+    .fontSize(18)
+    .fillColor(PRIMARY_COLOR)
+    .text(data.report.title, { align: "left" });
+
+  doc
+    .fontSize(10)
+    .fillColor("gray")
+    .text(`Rapport: ${data.report.code}`, { continued: true })
+    .text(`   |   Datum: ${data.report.generatedDate}`);
+
+  doc.moveDown();
+
+  doc
+    .moveTo(50, doc.y)
+    .lineTo(550, doc.y)
+    .strokeColor(LIGHT_GRAY)
+    .stroke();
+
+  doc.moveDown();
+
+  // ===============================
+  // ORDER INFO (2 kolommen)
+  // ===============================
+
+  doc
+    .fontSize(12)
+    .fillColor(PRIMARY_COLOR)
+    .text("Orderinformatie");
+
+  doc.moveDown(0.5);
+  doc.fontSize(10).fillColor("black");
+
+  const leftX = 50;
+  const rightX = 300;
+  let y = doc.y;
+
+  doc.text("Ordernummer:", leftX, y);
+  doc.text(data.order.orderNumber, leftX + 100, y);
+
+  doc.text("Type:", rightX, y);
+  doc.text(data.order.type, rightX + 60, y);
+
+  y += 18;
+
+  doc.text("Chassisnr:", leftX, y);
+  doc.text(data.order.chassisNumber, leftX + 100, y);
+
+  doc.text("Modeljaar:", rightX, y);
+  doc.text(data.order.modelYear, rightX + 60, y);
+
+  y += 18;
+
+  doc.text("Kenteken:", leftX, y);
+  doc.text(data.order.kenteken, leftX + 100, y);
+
+  doc.text("Kleur:", rightX, y);
+  doc.text(data.order.color, rightX + 60, y);
+
+  y += 18;
+
+  doc.text("VIN:", leftX, y);
+  doc.text(data.order.vin, leftX + 100, y);
+
+  doc.moveDown(2);
+
+  // ===============================
+  // CLAIMS TABEL
+  // ===============================
+
+  doc
+    .fontSize(12)
+    .fillColor(PRIMARY_COLOR)
+    .text("Campagnes / Claims");
+
+  doc.moveDown();
+
+  const tableTop = doc.y;
+  const rowHeight = 22;
+
+  const columns = {
+    claim: 50,
+    desc: 110,
+    period: 280,
+    km: 400,
+    status: 470
+  };
+
+  // Header achtergrond
+  doc
+    .rect(50, tableTop, 500, rowHeight)
+    .fill(PRIMARY_COLOR);
+
+  doc
+    .fillColor("white")
+    .fontSize(10)
+    .text("Claim", columns.claim, tableTop + 6)
+    .text("Omschrijving", columns.desc, tableTop + 6)
+    .text("Periode", columns.period, tableTop + 6)
+    .text("KM", columns.km, tableTop + 6)
+    .text("Afgehandeld", columns.status, tableTop + 6);
+
+  let currentY = tableTop + rowHeight;
+
+  doc.fillColor("black");
+
+  data.claims.forEach((claim, index) => {
+    if (currentY > 750) {
+      doc.addPage();
+      currentY = 50;
+    }
+
+    // Zebra stripe
+    if (index % 2 === 0) {
+      doc
+        .rect(50, currentY, 500, rowHeight)
+        .fill(LIGHT_GRAY)
+        .fillColor("black");
+    }
+
+    doc
+      .fontSize(9)
+      .text(claim.claimCode, columns.claim, currentY + 6)
+      .text(claim.description, columns.desc, currentY + 6, { width: 150 })
+      .text(
+        `${claim.startDate} - ${claim.endDate}`,
+        columns.period,
+        currentY + 6
+      )
+      .text(
+        `${claim.startKm} - ${claim.endKm}`,
+        columns.km,
+        currentY + 6
+      )
+      .text(
+        claim.afgehandeld,
+        columns.status,
+        currentY + 6
+      );
+
+    currentY += rowHeight;
+  });
+
+  // ===============================
+  // FOOTER
+  // ===============================
+
+  doc.moveDown(2);
+
+  doc
+    .fontSize(8)
+    .fillColor("gray")
+    .text(
+      `Gelezen door ${data.audit.readBy} op ${data.audit.readDateTime}`,
+      50,
+      750,
+      { align: "center" }
+    );
+
+  doc.end();
+
+  console.log("Modern PDF gegenereerd:", fileName);
+}
+
  
 //samenstellenPDF('{}')
 module.exports = {
@@ -1450,5 +1646,6 @@ module.exports = {
   mergePDFdocumenten: mergePDFdocumenten,
   samenstellenPDF_Voorblad: samenstellenPDF_Voorblad,
   mergeOverlayWithDocument: mergeOverlayWithDocument,
+  generateCampagnePdf: generateCampagnePdf,
   
   };
